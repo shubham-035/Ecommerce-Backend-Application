@@ -1,0 +1,406 @@
+CART-SERVICE
+
+Entity
+-------
+package com.cart_service.entity;
+
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+
+@Entity
+@Table(name = "cart")
+public class Cart {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    @Column(name = "uuid", unique = true)
+    private String uuid;
+
+    private Long userId;
+
+    @JsonManagedReference
+    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<CartItem> cartItems = new LinkedHashSet<>();
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public Set<CartItem> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(Set<CartItem> cartItems) {
+        this.cartItems = cartItems;
+    }
+}
+
+package com.cart_service.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "cart_item")
+public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    private long productId;
+    private long brandId;
+    private int quantity;
+    private BigDecimal price;
+
+
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    @JsonBackReference
+    private Cart cart;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public long getBrandId() {
+        return brandId;
+    }
+
+    public void setBrandId(long brandId) {
+        this.brandId = brandId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Cart getCart() {
+        return cart;
+    }
+
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
+}
+
+controller 
+-----------
+package com.cart_service.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "cart_item")
+public class CartItem {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
+
+    private long productId;
+    private long brandId;
+    private int quantity;
+    private BigDecimal price;
+
+
+    @ManyToOne
+    @JoinColumn(name = "cart_id")
+    @JsonBackReference
+    private Cart cart;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public long getBrandId() {
+        return brandId;
+    }
+
+    public void setBrandId(long brandId) {
+        this.brandId = brandId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Cart getCart() {
+        return cart;
+    }
+
+    public void setCart(Cart cart) {
+        this.cart = cart;
+    }
+}
+
+
+repository 
+------------------
+package com.cart_service.repository;
+
+import com.cart_service.entity.CartItem;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface CartItemRepository extends JpaRepository<CartItem, Long> {
+}
+
+package com.cart_service.repository;
+
+import com.cart_service.entity.Cart;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface CartRepository extends JpaRepository<Cart, Long> {
+    Optional<Cart> findByUuid(String uuid);
+}
+
+DTO
+-----------------------------
+
+package com.cart_service.dto;
+
+import java.math.BigDecimal;
+
+public class AddToCartRequest {
+    private long productId;
+    private long brandId;
+    private int quantity;
+    private BigDecimal price;
+
+    public long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(long productId) {
+        this.productId = productId;
+    }
+
+    public long getBrandId() {
+        return brandId;
+    }
+
+    public void setBrandId(long brandId) {
+        this.brandId = brandId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+}
+
+package com.cart_service.dto;
+
+public class ApiResponse<T> {
+    private String message;
+    private int status;
+    private T data;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+}
+
+Service
+-----------
+
+package com.cart_service.service;
+
+import com.cart_service.dto.AddToCartRequest;
+import com.cart_service.entity.Cart;
+import com.cart_service.entity.CartItem;
+import com.cart_service.repository.CartRepository;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class CartService {
+    private CartRepository cartRepository;
+
+    public CartService(CartRepository cartRepository) {
+        this.cartRepository = cartRepository;
+    }
+
+
+    public Cart addToCart(String uuid , AddToCartRequest request){
+        Cart cart;
+
+        //check uuid
+        if(uuid==null || uuid.isEmpty()){
+            uuid = UUID.randomUUID().toString();
+            cart=new Cart();
+            cart.setUuid(uuid);
+        }else{
+            Optional<Cart> optionalCart = cartRepository.findByUuid(uuid);
+
+            if (optionalCart.isPresent()) {
+                cart = optionalCart.get();
+            } else {
+                Cart newCart = new Cart();
+                newCart.setUuid(uuid);
+                cart = newCart;
+            }
+        }
+
+        //if the product already exist
+        Optional<CartItem>  existItem= cart.getCartItems().stream()
+                .filter(cartItem -> cartItem.getProductId()==request.getProductId())
+                .findFirst();
+
+        //check exist item
+        if(existItem.isPresent()){
+            CartItem item=existItem.get();
+            item.setQuantity(item.getQuantity()+ request.getQuantity());
+        }else{
+            CartItem item=new CartItem();
+            item.setProductId(request.getProductId());
+            item.setPrice(request.getPrice());
+            item.setQuantity(request.getQuantity());
+            item.setBrandId(request.getBrandId());
+            item.setCart(cart);
+
+            cart.getCartItems().add(item);
+        }
+        return cartRepository.save(cart);
+    }
+
+    public Cart getCart(String uuid) {
+
+        return cartRepository.findByUuid(uuid)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "Cart not found"));
+    }
+
+    public void clearCart(String uuid){
+        Cart cart = cartRepository.findByUuid(uuid)
+                .orElseThrow(() -> new RuntimeException("cart not found"));
+
+        cartRepository.delete(cart);
+    }
+}
+
+
+
+
+

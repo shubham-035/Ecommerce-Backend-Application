@@ -1,0 +1,556 @@
+############################
+Product-Service
+############################
+
+
+1. Create Spring boot project with following dependencies
+-------------------------------------------------------------
+
+spring-boot-starter-web	REST API support
+spring-boot-starter-data-jpa	Spring Data JPA + Hibernate
+mysql-connector-j	- MySQL JDBC driver
+spring-cloud-starter-netflix-eureka-client -	Registers with Eureka Server
+spring-cloud-starter-openfeign -	Feign client for inter-service calls
+lombok	@Data, @Builder, @RequiredArgsConstructor etc.
+spring-boot-starter-test	- Unit testing support
+
+2. Create application.properties file
+--------------------------------------
+spring.application.name=product-service
+
+# Server
+server.port=8082
+
+# Datasource
+spring.datasource.url=jdbc:mysql://localhost:3306/product_db?createDatabaseIfNotExist=true&useSSL=false
+spring.datasource.username=root
+spring.datasource.password=test
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+
+# JPA
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+
+# Eureka Client
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.client.fetch-registry=true
+eureka.client.register-with-eureka=true
+
+# Eureka Instance
+eureka.instance.prefer-ip-address=true
+
+3:Entity Classes Create with mappings
+------------------------
+
+
+
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "category")
+public class Category {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "name", length = 45)
+    private String name;
+
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<SubCategory> subCategories = new LinkedHashSet<>();
+
+    public Set<SubCategory> getSubCategories() {
+        return subCategories;
+    }
+
+    public void setSubCategories(Set<SubCategory> subCategories) {
+        this.subCategories = subCategories;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+}
+*************************************
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "sub_category")
+public class SubCategory {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
+
+    @OneToMany(mappedBy = "subCategory", orphanRemoval = true)
+    private Set<Product> products = new LinkedHashSet<>();
+
+    public Set<Product> getProducts() {
+        return products;
+    }
+
+    public void setProducts(Set<Product> products) {
+        this.products = products;
+    }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+    public void setId(Integer id) {
+        this.id = id;
+    }
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+
+}
+***********************************
+
+
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "products")
+public class Product {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String name;
+
+    @ManyToOne
+    @JoinColumn(name = "sub_category_id")
+    private SubCategory subCategory;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Brand> brands = new LinkedHashSet<>();
+
+    public Set<Brand> getBrands() {
+        return brands;
+    }
+
+    public void setBrands(Set<Brand> brands) {
+        this.brands = brands;
+    }
+
+    public SubCategory getSubCategory() {
+        return subCategory;
+    }
+
+    public void setSubCategory(SubCategory subCategory) {
+        this.subCategory = subCategory;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+****************************
+
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
+@Entity
+@Table(name = "brand")
+public class Brand {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String name;
+    private BigDecimal price;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
+
+    @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Size> sizes = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "brand", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Image> images = new LinkedHashSet<>();
+
+    public Set<Image> getImages() {
+        return images;
+    }
+
+    public void setImages(Set<Image> images) {
+        this.images = images;
+    }
+
+    public Set<Size> getSizes() {
+        return sizes;
+    }
+
+    public void setSizes(Set<Size> sizes) {
+        this.sizes = sizes;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+}
+*************************************
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "images")
+public class Image {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @Column(name = "url", length = 2000)
+    private String url;
+
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    public Brand getBrand() {
+        return brand;
+    }
+
+    public void setBrand(Brand brand) {
+        this.brand = brand;
+    }
+}
+
+*********************
+package com.product_service.entity;
+
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "size")
+public class Size {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    private String size;
+    private String quantity;
+
+    @ManyToOne
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
+
+    public Brand getBrand() {
+        return brand;
+    }
+
+    public void setBrand(Brand brand) {
+        this.brand = brand;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
+    }
+
+    public String getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(String quantity) {
+        this.quantity = quantity;
+    }
+}
+
+4. Create Service Layer
+------------------------
+package com.product_service.service;
+
+import com.product_service.dto.CategoryDto;
+
+import java.util.List;
+
+public interface CategoryService {
+
+    public List<CategoryDto> findAll();
+    public CategoryDto findByCategoryId(long id);
+    public CategoryDto findByCategoryName(String name);
+}
+package com.product_service.service;
+
+import com.product_service.dto.CategoryDto;
+import com.product_service.entity.Category;
+import com.product_service.mapper.CategoryMapper;
+import com.product_service.repository.CategoryRepository;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class CategoryServiceImpl implements CategoryService{
+    
+    private CategoryRepository categoryRepository;
+
+    public CategoryServiceImpl(CategoryRepository categoryRepository) {
+        this.categoryRepository = categoryRepository;
+    }
+
+    @Override
+    public List<CategoryDto> findAll() {
+        List<Category> categories = categoryRepository.findAll();
+        List<CategoryDto> dtoList = new ArrayList<>();
+        for(Category c:categories){
+            CategoryDto categoryDto = CategoryMapper.convertCategoryToDto(c);
+            dtoList.add(categoryDto);
+        }
+        return dtoList;
+    }
+
+    @Override
+    public CategoryDto findByCategoryId(long id) {
+        return null;
+    }
+
+    @Override
+    public CategoryDto findByCategoryName(String name) {
+        return null;
+    }
+}
+
+5. Create mapper classes
+----------------------------
+Add this dependency
+<dependency>
+			<groupId>org.modelmapper</groupId>
+			<artifactId>modelmapper</artifactId>
+			<version>3.2.6</version>
+			<scope>compile</scope>
+</dependency>
+----------------------------------
+
+
+package com.product_service.mapper;
+
+import com.product_service.dto.CategoryDto;
+import com.product_service.entity.Category;
+import org.modelmapper.ModelMapper;
+
+public class CategoryMapper {
+
+    private static final ModelMapper mapper = new ModelMapper();
+
+    public static CategoryDto  convertCategoryToDto(Category category){
+      return  mapper.map(category, CategoryDto.class);
+    }
+}
+
+
+6. Create APIReponse Class
+-----------------------------
+package com.product_service.dto;
+
+public class ApiResponse<T> {
+    private String message;
+    private int status;
+    private T data;
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+}
+
+
+7. Develop Controller Layer
+-----------------------------
+package com.product_service.controller;
+
+import com.product_service.dto.ApiResponse;
+import com.product_service.dto.CategoryDto;
+import com.product_service.service.CategoryService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/v1/product")
+public class ProductController {
+
+    private CategoryService categoryService;
+
+    public ProductController(CategoryService categoryService) {
+        this.categoryService = categoryService;
+    }
+
+    @GetMapping("/list/categories")
+    public ResponseEntity<ApiResponse<List<CategoryDto>>> getCategories(){
+        List<CategoryDto> categoriesDto = categoryService.findAll();
+        ApiResponse<List<CategoryDto>> response = new ApiResponse<>();
+        if(categoriesDto!=null){
+            response.setMessage("All categories data fetched");
+            response.setStatus(200);
+            response.setData(categoriesDto);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        }
+
+        response.setMessage("No categories data found");
+        response.setStatus(500);
+        response.setData(null);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+
+
+-----------------------------------------------------
+8. Use the following sql queries to inject data into product_db
+
+INSERT INTO category (id, name) VALUES
+(1, 'Electronics'),
+(2, 'Clothing');
+
+
+INSERT INTO sub_category (id, name, category_id) VALUES
+(1, 'Mobiles', 1),
+(2, 'Laptops', 1),
+(3, 'Shirts', 2),
+(4, 'Shoes', 2);
+
+INSERT INTO products (id, name, sub_category_id) VALUES
+(1, 'iPhone 15', 1),
+(2, 'Samsung Galaxy S24', 1),
+(3, 'MacBook Pro', 2),
+(4, 'Dell XPS', 2),
+(5, 'Formal Shirt', 3),
+(6, 'Running Shoes', 4);
+
+9. Create Query for search box
+----------------------------------
+@Query("""
+    SELECT DISTINCT p FROM Product p
+    LEFT JOIN p.brands b
+    WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+       OR LOWER(p.subCategory.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+       OR LOWER(b.name) LIKE LOWER(CONCAT('%', :keyword, '%'))
+""")
+    List<Product> searchProducts(@Param("keyword") String keyword);
+
+
+
+
+

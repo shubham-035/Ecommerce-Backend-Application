@@ -1,0 +1,39 @@
+Api - Gateway 
+
+spring.application.name=api-gateway
+server.port=8080
+
+# Eureka
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka/
+eureka.client.register-with-eureka=true
+eureka.client.fetch-registry=true
+
+# Enable discovery locator
+spring.cloud.gateway.discovery.locator.enabled=true
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true
+
+
+# PRODUCT SERVICE
+spring.cloud.gateway.routes[0].id=product-service
+spring.cloud.gateway.routes[0].uri=lb://PRODUCT-SERVICE
+spring.cloud.gateway.routes[0].predicates[0]=Path=/api/v1/product/**
+
+
+# CART SERVICE
+spring.cloud.gateway.routes[1].id=cart-service
+spring.cloud.gateway.routes[1].uri=lb://CART-SERVICE
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api/v1/cart/**
+
+
+# ORDER SERVICE
+spring.cloud.gateway.routes[2].id=order-service
+spring.cloud.gateway.routes[2].uri=lb://ORDER-SERVICE
+spring.cloud.gateway.routes[2].predicates[0]=Path=/api/v1/order/**
+
+
+# PAYMENT SERVICE
+spring.cloud.gateway.routes[3].id=payment-service
+spring.cloud.gateway.routes[3].uri=lb://PAYMENT-SERVICE
+spring.cloud.gateway.routes[3].predicates[0]=Path=/api/v1/payments/**
+
+

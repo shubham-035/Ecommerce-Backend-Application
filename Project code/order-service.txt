@@ -1,0 +1,534 @@
+Order - Service
+
+entity 
+---------
+package com.order_service.entity;
+
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "orders")
+public class Order {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String cartUuid;
+
+    private Long userId;
+
+    private BigDecimal totalAmount;
+
+    private String status;
+
+    private LocalDateTime createdAt;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getCartUuid() {
+        return cartUuid;
+    }
+
+    public void setCartUuid(String cartUuid) {
+        this.cartUuid = cartUuid;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL
+    )
+    private List<OrderItem> orderItems = new ArrayList<>();
+
+    // getters setters
+
+    public List<OrderItem> getOrderItems() {
+        return orderItems;
+    }
+
+    public void setOrderItems(List<OrderItem> orderItems) {
+        this.orderItems = orderItems;
+    }
+}
+
+package com.order_service.entity;
+
+import jakarta.persistence.*;
+
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = "order_items")
+public class OrderItem {
+
+    @Id
+    @GeneratedValue(strategy =
+            GenerationType.IDENTITY)
+    private Long id;
+
+    private Long productId;
+
+    private Long brandId;
+
+    private Integer quantity;
+
+    private BigDecimal price;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    private Order order;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public Long getBrandId() {
+        return brandId;
+    }
+
+    public void setBrandId(Long brandId) {
+        this.brandId = brandId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+
+    public Order getOrder() {
+        return order;
+    }
+
+    public void setOrder(Order order) {
+        this.order = order;
+    }
+}
+
+
+
+
+controller 
+-----------
+
+package com.order_service.controller;
+
+import com.order_service.dto.CreateOrderResponse;
+import com.order_service.entity.Order;
+import com.order_service.service.OrderService;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/order")
+public class OrderController {
+    private OrderService orderService;
+
+    public OrderController(OrderService orderService) {
+        this.orderService = orderService;
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<CreateOrderResponse> createOrder(@RequestHeader("X-CART-ID") String uuid){
+        Order order = orderService.create(uuid);
+        CreateOrderResponse response=new CreateOrderResponse();
+        response.setOrderId(order.getId());
+        response.setStatus(order.getStatus());
+        response.setTotalAmount(order.getTotalAmount());
+        response.setMessage("order placed successfully");
+        return new ResponseEntity<>(response, HttpStatusCode.valueOf(201));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Order> getOrder(@PathVariable long id){
+        return ResponseEntity.ok(orderService.getOrder(id));
+    }
+}
+
+
+
+repository
+-----------
+package com.order_service.repository;
+
+import com.order_service.entity.Order;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface OrderRepository extends JpaRepository<Order, Long> {
+}
+
+
+
+dto
+-------------
+package com.order_service.dto;
+
+import java.math.BigDecimal;
+
+public class CartItemResponse {
+
+    private Long productId;
+    private Long brandId;
+    private Integer quantity;
+    private BigDecimal price;
+
+    // getters setters
+
+    public Long getProductId() {
+        return productId;
+    }
+
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
+
+    public Long getBrandId() {
+        return brandId;
+    }
+
+    public void setBrandId(Long brandId) {
+        this.brandId = brandId;
+    }
+
+    public Integer getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
+    }
+}
+
+package com.order_service.dto;
+
+import java.util.List;
+
+public class CartResponse {
+
+    private Long id;
+    private String uuid;
+    private Long userId;
+    private List<CartItemResponse> cartItems;
+
+    // getters setters
+
+
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+
+    public List<CartItemResponse> getCartItems() {
+        return cartItems;
+    }
+
+    public void setCartItems(List<CartItemResponse> cartItems) {
+        this.cartItems = cartItems;
+    }
+}
+
+package com.order_service.dto;
+
+import java.math.BigDecimal;
+
+public class CreateOrderResponse {
+    private long orderId;
+    private BigDecimal totalAmount;
+    private String status;
+    private String message;
+
+    public long getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(long orderId) {
+        this.orderId = orderId;
+    }
+
+    public BigDecimal getTotalAmount() {
+        return totalAmount;
+    }
+
+    public void setTotalAmount(BigDecimal totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+}
+
+
+
+
+
+
+client
+----------
+package com.order_service.client;
+
+import com.order_service.dto.CartResponse;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+@FeignClient(
+        name = "cart-service",
+        url = "http://localhost:8083"
+)
+public interface CartFeignClient {
+
+    @GetMapping("/api/v1/cart/{uuid}")
+    CartResponse getCart(
+            @PathVariable("uuid") String uuid
+    );
+    @DeleteMapping("/{uuid}/clear")
+    public ResponseEntity<String> clearCart(
+            @PathVariable String uuid
+    );
+}
+
+
+
+
+service
+-------------
+package com.order_service.service;
+
+import com.order_service.client.CartFeignClient;
+import com.order_service.dto.CartItemResponse;
+import com.order_service.dto.CartResponse;
+import com.order_service.entity.Order;
+import com.order_service.entity.OrderItem;
+import com.order_service.repository.OrderRepository;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+@Service
+public class OrderService {
+
+    private final OrderRepository
+            orderRepository;
+
+    private final CartFeignClient
+            cartFeignClient;
+
+    public OrderService(
+            OrderRepository orderRepository,
+            CartFeignClient cartFeignClient
+    ) {
+        this.orderRepository =
+                orderRepository;
+        this.cartFeignClient =
+                cartFeignClient;
+    }
+
+    public Order create(
+            String cartUuid
+    ) {
+
+        // 1 Fetch cart
+        CartResponse cart =
+                cartFeignClient
+                        .getCart(cartUuid);
+
+        // 2 Validate
+        if (cart == null ||
+                cart.getCartItems() == null ||
+                cart.getCartItems().isEmpty()) {
+
+            throw new RuntimeException(
+                    "cart is empty");
+        }
+
+        // 3 Calculate total
+        BigDecimal total =
+                cart.getCartItems()
+                        .stream()
+                        .map(item ->
+                                item.getPrice()
+                                        .multiply(
+                                                BigDecimal.valueOf(
+                                                        item.getQuantity()
+                                                )
+                                        )
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        // 4 Create order
+        Order order =
+                new Order();
+
+        order.setCartUuid(
+                cart.getUuid());
+
+        order.setUserId(
+                cart.getUserId());
+
+        order.setStatus(
+                "CREATED");
+
+        order.setTotalAmount(
+                total);
+
+        order.setCreatedAt(
+                LocalDateTime.now()
+        );
+
+        // 5 Copy cart items
+        for (
+                CartItemResponse item :
+                cart.getCartItems()
+        ) {
+
+            OrderItem orderItem =
+                    new OrderItem();
+
+            orderItem.setProductId(
+                    item.getProductId());
+
+            orderItem.setBrandId(
+                    item.getBrandId());
+
+            orderItem.setQuantity(
+                    item.getQuantity());
+
+            orderItem.setPrice(
+                    item.getPrice());
+
+            orderItem.setOrder(
+                    order);
+
+            order.getOrderItems()
+                    .add(orderItem);
+        }
+
+        // 6 Save
+        Order savedOrder =
+                orderRepository.save(
+                        order);
+
+        // 7 Clear cart
+        cartFeignClient.clearCart(
+                cartUuid);
+
+        return savedOrder;
+    }
+
+    public Order getOrder(long id){
+        return orderRepository.findById(id).orElseThrow(()->new RuntimeException("order not found"));
+    }
+}
+
